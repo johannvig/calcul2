@@ -82,7 +82,6 @@ steps:
             Write-Host "Function App créée avec succès."
         } else {
             Write-Host "La Function App existe déjà."
-        }
 
   # Étape 6 : Récupérer les dépendances
   - script: |
@@ -91,15 +90,27 @@ steps:
     workingDirectory: './azure-functions'
     displayName: 'Restaurer les dépendances'
 
+  # Étape 7 : Installation de la version spécifique de .NET SDK
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '6.x' # Version SDK .NET
+
+  # Étape 8 : Vérification des fichiers
+  - script: dir $(System.DefaultWorkingDirectory)/azure-functions /s
+    displayName: 'Liste des fichiers dans le répertoire de travail'
+
+  # Étape 9 : Publier les projets
   - task: DotNetCoreCLI@2
     inputs:
-      command: publish
+      command: 'publish'
       arguments: '--configuration Release --output publish_output'
-      projects: '*.csproj'
+      projects: '**/*.csproj' # Recherche tous les projets
       publishWebProjects: false
       modifyOutputPath: false
       zipAfterPublish: false
 
+  # Étape 10 : Archiver les fichiers
   - task: ArchiveFiles@2
     displayName: "Archive files"
     inputs:
@@ -107,12 +118,13 @@ steps:
       includeRootFolder: false
       archiveFile: "$(System.DefaultWorkingDirectory)/build$(Build.BuildId).zip"
 
+  # Étape 11 : Publier les artefacts
   - task: PublishBuildArtifacts@1
     inputs:
       PathtoPublish: '$(System.DefaultWorkingDirectory)/build$(Build.BuildId).zip'
       artifactName: 'drop'
 
-  # Étape 7 : Déployer la Function App
+  # Étape 12 : Déployer la Function App
   - task: AzureFunctionApp@1
     displayName: 'Déployer les fonctions dans Azure'
     inputs:
@@ -121,7 +133,7 @@ steps:
       appName: 'FunctionAppProjet23'
       package: $(System.DefaultWorkingDirectory)/*.zip
 
-  # Étape 8 : Vérification finale
+  # Étape 13 : Vérification finale
   - script: |
       echo "Chaîne Service Bus utilisée : $(ServiceBusConnectionString)"
       echo "Chaîne Blob Storage utilisée : $(AzureWebJobsStorage)"
