@@ -8,7 +8,18 @@ variables:
   ServiceBusConnectionString: ''
 
 steps:
-# Étape 1 : Récupérer la chaîne de connexion AzureWebJobsStorage
+# Étape 1 : Déployer le Blob Storage
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Déployer le Blob Storage'
+  inputs:
+    azureResourceManagerConnection: '<AzureSubscription>'
+    resourceGroupName: '<resourceGroupName>'
+    location: 'canadacentral'
+    templateLocation: 'Linked artifact'
+    csmFile: 'infra/azuredeploy-storage.json'
+    csmParametersFile: 'infra/parameters-storage.json'
+    
+# Étape 2 : Récupérer la chaîne de connexion Blob Storage
 - task: AzureCLI@2
   displayName: 'Récupérer la chaîne de connexion AzureWebJobsStorage'
   inputs:
@@ -22,7 +33,18 @@ steps:
         --query 'connectionString' -o tsv
       Write-Host "##vso[task.setvariable variable=AzureWebJobsStorage]$STORAGE_CONNECTION_STRING"
 
-# Étape 2 : Récupérer la chaîne de connexion ServiceBusConnectionString
+# Étape 3 : Déployer le Service Bus
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Déployer le Service Bus'
+  inputs:
+    azureResourceManagerConnection: '<AzureSubscription>'
+    resourceGroupName: '<resourceGroupName>'
+    location: 'canadacentral'
+    templateLocation: 'Linked artifact'
+    csmFile: 'infra/azuredeploy-servicebus.json'
+    csmParametersFile: 'infra/parameters-servicebus.json'
+    
+# Étape 4 : Récupérer la chaîne de connexion ServiceBusConnectionString
 - task: AzureCLI@2
   displayName: 'Récupérer la chaîne de connexion ServiceBusConnectionString'
   inputs:
@@ -37,7 +59,20 @@ steps:
         --query 'primaryConnectionString' -o tsv
       Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$SERVICEBUS_CONNECTION_STRING"
 
-# Étape 3 : Configurer les paramètres de la Function App
+# Étape 5 : Déployer la Function App
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'Déployer la Function App'
+  inputs:
+    azureResourceManagerConnection: '<AzureSubscription>'
+    resourceGroupName: '<resourceGroupName>'
+    location: 'canadacentral'
+    templateLocation: 'Linked artifact'
+    csmFile: 'infra/azuredeploy-function.json'
+    csmParametersFile: 'infra/parameters-function.json'
+    overrideParameters: >
+      -serviceBusConnectionString "$(ServiceBusConnectionString)"
+
+# Étape 6 : Configurer les paramètres de la Function App
 - task: AzureCLI@2
   displayName: 'Configurer les paramètres de l’application Function App'
   inputs:
@@ -51,26 +86,26 @@ steps:
         --settings AzureWebJobsStorage="$(AzureWebJobsStorage)" `
                    ServiceBusConnectionString="$(ServiceBusConnectionString)"
 
-# Étape 4 : Installer le SDK .NET
+# Étape 7 : Installer le SDK .NET
 - task: UseDotNet@2
   displayName: 'Installer .NET SDK'
   inputs:
     packageType: 'sdk'
     version: '8.0.x'
 
-# Étape 5 : Restaurer les dépendances
+# Étape 8 : Restaurer les dépendances
 - script: |
     dotnet restore
   workingDirectory: './azure-functions'
   displayName: 'Restaurer les dépendances'
 
-# Étape 6 : Compiler et publier le projet
+# Étape 9 : Compiler et publier le projet
 - script: |
     dotnet publish -c Release -o ./publish
   workingDirectory: './azure-functions'
   displayName: 'Compiler et publier les fonctions'
 
-# Étape 7 : Déployer les fonctions dans la Function App
+# Étape 10 : Déployer les fonctions dans la Function App
 - task: AzureFunctionApp@1
   displayName: 'Déployer les fonctions dans Azure'
   inputs:
@@ -79,7 +114,7 @@ steps:
     appName: 'FunctionAppProjet23'
     package: '$(System.DefaultWorkingDirectory)/azure-functions/publish'
 
-# Étape 8 : Vérification finale
+# Étape 11 : Vérification finale
 - script: |
     echo "Clé Service Bus utilisée : $(ServiceBusConnectionString)"
     echo "Déploiement terminé avec succès."
