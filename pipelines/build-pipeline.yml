@@ -100,20 +100,14 @@ steps:
       inlineScript: |
  
         $SERVICEBUS_CONNECTION_STRING = az servicebus namespace authorization-rule keys list `
- 
-          --resource-group Projet-2 `
- 
-          --namespace-name AzureBus-TMEB `
- 
-          --name RootManageSharedAccessKey `
- 
+          --resource-group 'Projet-2' `
+          --namespace-name 'AzureBus-TMEB' `
+          --name 'RootManageSharedAccessKey' `
           --query 'primaryConnectionString' -o tsv
- 
+
         Write-Host "Chaîne de connexion Service Bus : $SERVICEBUS_CONNECTION_STRING"
- 
         Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$SERVICEBUS_CONNECTION_STRING"
- 
- 
+
   # Étape 5 : Vérification des paramètres configurés
  
   - task: AzureCLI@2
