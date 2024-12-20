@@ -1,77 +1,10 @@
 trigger:
 - main
-# Déclenche le pipeline lorsque des changements sont poussés sur la branche `main`
 
 pool: 'default'
-# Utilise l'agent par défaut pour exécuter le pipeline
-
-variables:
-  ServiceBusConnectionString: 'Endpoint=sb://devoirguro.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=TKKcqPGJw9JYIQNwikA4Ihv2qejQwxFvx+ASbKBLad4='
-# Définit une variable contenant la chaîne de connexion pour Azure Service Bus
 
 steps:
-# Étape 1 : Installation du SDK .NET 8.x
-- task: UseDotNet@2
-  displayName: 'Installer .NET SDK 8.x'
-  inputs:
-    packageType: 'sdk'
-    version: '8.0.100'
-
-# Étape 2 : Restauration des dépendances du projet
-- script: |
-    dotnet restore
-  workingDirectory: './azure-functions'
-  displayName: 'Restaurer les dépendances'
-
-# Étape 2.1 : Lister les dépendances NuGet du projet
-- script: |
-    dotnet list package
-  workingDirectory: './azure-functions'
-  displayName: 'Lister les dépendances NuGet'
-
-# Étape 3 : Compiler le projet en mode Release
-- script: |
-    dotnet build -c Release
-  workingDirectory: './azure-functions'
-  displayName: 'Compiler le projet'
-
-# Étape 4 : Publier le projet dans un répertoire spécifique
-- script: |
-    dotnet publish -c Release -o ./publishs
-  workingDirectory: './azure-functions'
-  displayName: 'Publier le projet'
-
-# Étape 4.2 : Vérification des fichiers publiés
-- script: |
-    echo "Répertoire actuel : $(System.DefaultWorkingDirectory)"
-    echo "Contenu du répertoire azure-functions :"
-    dir "$(System.DefaultWorkingDirectory)\azure-functions"
-    echo "Contenu du répertoire publishs :"
-    dir "$(System.DefaultWorkingDirectory)\azure-functions\publishs"
-  displayName: 'Vérifier les fichiers publiés'
-
-# Étape 5 : Archiver les fichiers publiés en un fichier ZIP
-- task: ArchiveFiles@2
-  displayName: 'Archiver les fichiers publiés'
-  inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/azure-functions/publishs'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/azure-functions.zip'
-    archiveType: 'zip'
-
-# Étape 5.1 : Vérifier le contenu du fichier ZIP créé
-- script: |
-    echo "Vérification du contenu du fichier azure-functions.zip"
-    tar -tf $(Build.ArtifactStagingDirectory)/azure-functions.zip
-  displayName: 'Vérifier le contenu du package ZIP'
-
-# Étape 6 : Publier l'artefact de build
-- task: PublishBuildArtifacts@1
-  displayName: 'Publier l’artefact'
-  inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: 'FunctionApp'
-
-# Étape 7 : Déployer le Blob Storage
+# Étape 1 : Déployer le Blob Storage
 - task: AzureResourceManagerTemplateDeployment@3
   displayName: 'Déployer le Blob Storage'
   inputs:
@@ -82,7 +15,7 @@ steps:
     csmFile: 'infra/azuredeploy-storage.json'
     csmParametersFile: 'infra/parameters-storage.json'
 
-# Étape 8 : Déployer le Service Bus
+# Étape 2 : Déployer le Service Bus
 - task: AzureResourceManagerTemplateDeployment@3
   displayName: 'Déployer le Service Bus'
   inputs:
@@ -93,7 +26,7 @@ steps:
     csmFile: 'infra/azuredeploy-servicebus.json'
     csmParametersFile: 'infra/parameters-servicebus.json'
 
-# Étape 9 : Attendre la disponibilité du Service Bus
+# Étape 3 : Attendre la disponibilité du Service Bus
 - task: PowerShell@2
   displayName: 'Attente de la disponibilité du Service Bus'
   inputs:
@@ -102,19 +35,7 @@ steps:
       Write-Host "Attente de 30 secondes pour la disponibilité du Service Bus..."
       Start-Sleep -Seconds 30
 
-# Étape 10 : Vérifier l'existence du namespace Service Bus
-- task: AzureCLI@2
-  displayName: 'Vérifier l’existence du Service Bus'
-  inputs:
-    azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
-    scriptType: 'ps'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      az servicebus namespace show `
-        --resource-group 'Projet-2' `
-        --name 'AzureBus-TMEB'
-
-# Étape 11 : Récupérer la clé de connexion Service Bus
+# Étape 4 : Récupérer la clé de connexion Service Bus
 - task: AzureCLI@2
   displayName: 'Récupérer la clé de connexion Service Bus'
   inputs:
@@ -130,7 +51,7 @@ steps:
       Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$CONNECTION_STRING"
   condition: succeeded()
 
-# Étape 12 : Déployer la Function App
+# Étape 5 : Déployer la Function App
 - task: AzureResourceManagerTemplateDeployment@3
   displayName: 'Déployer la Function App'
   inputs:
@@ -143,16 +64,49 @@ steps:
     overrideParameters: >
       -serviceBusConnectionString "$(ServiceBusConnectionString)"
 
-# Étape 13 : Déployer les fonctions dans la Function App
+# Étape 6 : Configurer les variables d'application
+- task: AzureCLI@2
+  displayName: 'Configurer les variables d’application'
+  inputs:
+    azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
+    scriptType: 'ps'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      az functionapp config appsettings set `
+        --resource-group 'Projet-2' `
+        --name 'FunctionAppProjet23' `
+        --settings AzureWebJobsStorage=$(AzureWebJobsStorage) `
+                   ServiceBusConnectionString=$(ServiceBusConnectionString)
+
+# Étape 7 : Installer le SDK .NET 8.x
+- task: UseDotNet@2
+  displayName: 'Installer .NET SDK 8.x'
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.100'
+
+# Étape 8 : Restaurer les dépendances
+- script: |
+    dotnet restore
+  workingDirectory: './azure-functions'
+  displayName: 'Restaurer les dépendances'
+
+# Étape 9 : Compiler le projet
+- script: |
+    dotnet build -c Release
+  workingDirectory: './azure-functions'
+  displayName: 'Compiler le projet'
+
+# Étape 10 : Publier le projet
+- script: |
+    dotnet publish -c Release -o ./publishs
+  workingDirectory: './azure-functions'
+  displayName: 'Publier le projet'
+
+# Étape 11 : Déployer les fonctions dans la Function App
 - task: AzureFunctionApp@1
   inputs:
     azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     appType: 'functionApp'
     appName: 'FunctionAppProjet23'
-    package: '$(System.DefaultWorkingDirectory)/azure-functions.zip'
-
-# Étape 14 : Vérification finale
-- script: |
-    echo "Clé Service Bus utilisée : $(ServiceBusConnectionString)"
-    echo "Déploiement terminé avec succès."
-  displayName: 'Vérification finale'
+    package: '$(System.DefaultWorkingDirectory)/azure-functions/publishs'
