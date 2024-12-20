@@ -84,27 +84,24 @@ steps:
  
  
   # Étape 4 : Récupérer la chaîne de connexion Service Bus
- 
   - task: AzureCLI@2
- 
     displayName: 'Récupérer la chaîne de connexion ServiceBusConnectionString'
- 
     inputs:
- 
       azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
- 
       scriptType: 'ps'
- 
       scriptLocation: 'inlineScript'
- 
       inlineScript: |
- 
-        $SERVICEBUS_CONNECTION_STRING = az servicebus namespace authorization-rule keys list `
+        # Créer la commande Azure CLI complète
+        $COMMAND = "az servicebus namespace authorization-rule keys list `
           --resource-group 'Projet-2' `
           --namespace-name 'AzureBus-TMEB' `
           --name 'RootManageSharedAccessKey' `
-          --query 'primaryConnectionString' -o tsv
+          --query 'primaryConnectionString' -o tsv"
 
+        # Exécuter la commande et récupérer la chaîne de connexion
+        $SERVICEBUS_CONNECTION_STRING = Invoke-Expression $COMMAND
+
+        # Afficher la chaîne de connexion et définir la variable
         Write-Host "Chaîne de connexion Service Bus : $SERVICEBUS_CONNECTION_STRING"
         Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$SERVICEBUS_CONNECTION_STRING"
 
