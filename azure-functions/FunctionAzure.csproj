@@ -1,29 +1,56 @@
 <Project Sdk="Microsoft.NET.Sdk">
+	<!-- Définit le SDK utilisé pour le projet (.NET Standard SDK) -->
 	<PropertyGroup>
+		<!-- Framework cible pour le projet, ici .NET 8.0 -->
 		<TargetFramework>net8.0</TargetFramework>
+		
+		<!-- Version des Azure Functions utilisée, ici v4 -->
 		<AzureFunctionsVersion>v4</AzureFunctionsVersion>
+		
+		<!-- Type de sortie du projet, ici un exécutable -->
 		<OutputType>Exe</OutputType>
+		
+		<!-- Active les directives "using" implicites pour réduire les imports nécessaires -->
 		<ImplicitUsings>enable</ImplicitUsings>
+		
+		<!-- Active les types nullable pour éviter les erreurs liées aux références nulles -->
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<!-- Ajoute la bibliothèque principale pour le Worker SDK des Azure Functions -->
 		<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
+		
+		<!-- Extension pour les triggers HTTP dans Azure Functions -->
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.2.0" />
+		
+		<!-- Extension pour les triggers liés aux blobs dans Azure Functions -->
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Blobs" Version="6.6.0" />
+		
+		<!-- Extension pour interagir avec Service Bus dans Azure Functions -->
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.22.0" />
-
-		<!-- Mettre à jour Azure.Messaging.ServiceBus à la version requise -->
+		
+		<!-- Bibliothèque pour interagir directement avec Azure Service Bus -->
 		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.1" />
-
+		
+		<!-- Bibliothèque pour interagir directement avec le stockage Azure Blob -->
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
+		
+		<!-- Intégration d'Application Insights pour surveiller les services Worker -->
 		<PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
+		
+		<!-- Intégration spécifique d'Application Insights pour Azure Functions -->
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.4.0" />
+		
+		<!-- Fournit des outils pour simplifier l'accès aux services Azure -->
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.5" />
+		
+		<!-- Fournit des fonctionnalités graphiques, utile pour le traitement d'images -->
 		<PackageReference Include="System.Drawing.Common" Version="7.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<!-- Spécifie que le fichier host.json doit être copié dans le répertoire de sortie uniquement s'il est modifié -->
 		<None Update="host.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
