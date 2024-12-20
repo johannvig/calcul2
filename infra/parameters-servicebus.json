@@ -1,9 +1,16 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  // URL du schéma JSON pour valider la structure de ce fichier de paramètres ARM
+
   "contentVersion": "1.0.0.0",
+  // Version du contenu pour le contrôle des versions de ce fichier
+
   "parameters": {
+    // Paramètres et leurs valeurs spécifiques pour le déploiement
+
     "namespaces_AzureBus_TMEB_name": {
       "value": "AzureBus-TMEB"
+      // Nom du namespace Azure Service Bus à déployer ou configurer
     }
   }
 }
