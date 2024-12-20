@@ -1,8 +1,7 @@
 trigger:
 - main
 
-pool:
-  name: 'Projet2CLD'
+pool: 'default'
 
 variables:
   ServiceBusConnectionString: ''
@@ -74,7 +73,7 @@ steps:
 - task: AzureResourceManagerTemplateDeployment@3
   displayName: 'Deployer le Blob Storage'
   inputs:
-    azureResourceManagerConnection: 'AzureConnectionSub1'
+    azureResourceManagerConnection: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     resourceGroupName: 'Projet-2'
     location: 'canadacentral'
     templateLocation: 'Linked artifact'
@@ -85,7 +84,7 @@ steps:
 - task: AzureResourceManagerTemplateDeployment@3
   displayName: 'Deployer le Service Bus'
   inputs:
-    azureResourceManagerConnection: 'AzureConnectionSub1'
+    azureResourceManagerConnection: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     resourceGroupName: 'Projet-2'
     location: 'canadacentral'
     templateLocation: 'Linked artifact'
@@ -105,7 +104,7 @@ steps:
 - task: AzureCLI@2
   displayName: 'Verifier leexistence du Service Bus'
   inputs:
-    azureSubscription: 'AzureConnectionSub1'
+    azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     scriptType: 'ps'
     scriptLocation: 'inlineScript'
     inlineScript: |
@@ -117,7 +116,7 @@ steps:
 - task: AzureCLI@2
   displayName: 'Recuperer la cle de connexion Service Bus'
   inputs:
-    azureSubscription: 'AzureConnectionSub1'
+    azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     scriptType: 'ps'
     scriptLocation: 'inlineScript'
     inlineScript: |
@@ -133,7 +132,7 @@ steps:
 - task: AzureResourceManagerTemplateDeployment@3
   displayName: 'DEployer la Function App'
   inputs:
-    azureResourceManagerConnection: 'AzureConnectionSub1'
+    azureResourceManagerConnection: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     resourceGroupName: 'Projet-2'
     location: 'canadacentral'
     templateLocation: 'Linked artifact'
@@ -145,7 +144,7 @@ steps:
 # Etape 13 (Deploy) : DEployer les fonctions
 - task: AzureFunctionApp@1
   inputs:
-    azureSubscription: 'AzureConnectionSub1'
+    azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     appType: 'functionApp'
     appName: 'FunctionAppProjet2'
     package: '$(System.DefaultWorkingDirectory)/azure-functions.zip'
