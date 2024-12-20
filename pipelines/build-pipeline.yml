@@ -31,6 +31,7 @@ steps:
           --resource-group Projet-2 `
           --name storageprojet23 `
           --query 'connectionString' -o tsv
+        Write-Host "Chaîne de connexion Blob Storage : $STORAGE_CONNECTION_STRING"
         Write-Host "##vso[task.setvariable variable=AzureWebJobsStorage]$STORAGE_CONNECTION_STRING"
 
   # Étape 3 : Déployer le Service Bus
@@ -57,6 +58,7 @@ steps:
           --namespace-name AzureBus-TMEB `
           --name RootManageSharedAccessKey `
           --query 'primaryConnectionString' -o tsv
+        Write-Host "Chaîne de connexion Service Bus : $SERVICEBUS_CONNECTION_STRING"
         Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$SERVICEBUS_CONNECTION_STRING"
 
   # Étape 5 : Déployer la Function App
@@ -80,20 +82,26 @@ steps:
       scriptType: 'ps'
       scriptLocation: 'inlineScript'
       inlineScript: |
+        Write-Host "Configuration des paramètres dans Function App"
         az functionapp config appsettings set `
           --resource-group Projet-2 `
           --name FunctionAppProjet23 `
           --settings AzureWebJobsStorage="$(AzureWebJobsStorage)" `
                      ServiceBusConnectionString="$(ServiceBusConnectionString)"
 
-  # Étape 7 : Installer le SDK .NET
-  - task: UseDotNet@2
-    displayName: 'Installer le SDK .NET'
+  # Étape 7 : Vérification des paramètres configurés
+  - task: AzureCLI@2
+    displayName: 'Vérifier les paramètres d’application configurés'
     inputs:
-      packageType: 'sdk'
-      version: '8.0.x'
+      azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        az functionapp config appsettings list `
+          --resource-group Projet-2 `
+          --name FunctionAppProjet23
 
-  # Étape 8 : Restaurer les dépendances
+  # Étape 8 : Récupérer les dépendances
   - script: |
       dotnet restore
     workingDirectory: './azure-functions'
@@ -116,6 +124,7 @@ steps:
 
   # Étape 11 : Vérification finale
   - script: |
-      echo "Clé Service Bus utilisée : $(ServiceBusConnectionString)"
+      echo "Chaîne Service Bus utilisée : $(ServiceBusConnectionString)"
+      echo "Chaîne Blob Storage utilisée : $(AzureWebJobsStorage)"
       echo "Déploiement terminé avec succès."
     displayName: 'Vérification finale'
