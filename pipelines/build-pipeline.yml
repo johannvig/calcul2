@@ -4,7 +4,7 @@ trigger:
 pool: 'default'
 
 variables:
-  ServiceBusConnectionString: ''
+  ServiceBusConnectionString: 'Endpoint=sb://devoirguro.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=TKKcqPGJw9JYIQNwikA4Ihv2qejQwxFvx+ASbKBLad4='
 
 steps:
 # etape 1 (Build) : Installer le SDK .NET 8.x
