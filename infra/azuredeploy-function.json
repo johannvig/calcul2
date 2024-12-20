@@ -1,97 +1,142 @@
 {
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  // URL du schéma JSON pour valider la structure de ce fichier ARM Template
   "contentVersion": "1.0.0.0",
+  // Version du contenu pour le contrôle des versions de ce template
+
   "parameters": {
+    // Définition des paramètres requis pour déployer les ressources
+
     "subscriptionId": {
       "type": "string"
+      // Identifiant de la souscription Azure
     },
     "name": {
       "type": "string"
+      // Nom de l'application Azure Functions
     },
     "location": {
       "type": "string",
       "defaultValue": "canadacentral"
+      // Région Azure pour déployer les ressources (par défaut, Canada Central)
     },
     "storageAccountName": {
       "type": "string"
+      // Nom du compte de stockage Azure
     },
     "containerName": {
       "type": "string",
       "defaultValue": "images"
+      // Nom du conteneur dans le compte de stockage (par défaut, "images")
     },
     "serviceBusConnectionString": {
       "type": "string"
+      // Chaîne de connexion pour Azure Service Bus
     },
     "hostingPlanName": {
       "type": "string"
+      // Nom du plan d'hébergement (App Service Plan)
     },
     "serverFarmResourceGroup": {
       "type": "string"
+      // Nom du groupe de ressources pour le plan d'hébergement
     },
     "sku": {
       "type": "string",
       "defaultValue": "Dynamic"
+      // Type de tarification pour le plan d'hébergement (par défaut, "Dynamic" pour le consommateur)
     },
     "skuCode": {
       "type": "string",
       "defaultValue": "Y1"
+      // Code SKU pour le plan d'hébergement (par défaut, Y1 pour le consommateur)
     }
   },
+
   "variables": {
+    // Définition des variables utilisées dans le template
     "contentShare": "[concat(parameters('name'), 'content')]"
+    // Génère un nom unique pour le partage de contenu basé sur le nom de l'application
   },
+
   "resources": [
+    // Liste des ressources à créer ou à gérer
+
     {
       "type": "Microsoft.Web/sites",
+      // Type de ressource : application Azure Functions
       "apiVersion": "2022-03-01",
+      // Version de l'API pour interagir avec cette ressource
       "name": "[parameters('name')]",
+      // Nom de la fonction Azure (paramètre fourni)
       "location": "[parameters('location')]",
+      // Région où l'application sera déployée
       "kind": "functionapp",
+      // Type de service, ici une fonction Azure
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
+        // Dépendance : cette ressource nécessite un plan d'hébergement
       ],
       "properties": {
         "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+        // Référence au plan d'hébergement existant ou créé
         "siteConfig": {
+          // Configuration spécifique de l'application
           "appSettings": [
+            // Paramètres d'application
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
               "value": "~4"
+              // Version des extensions Azure Functions (ici v4)
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
               "value": "dotnet-isolated"
+              // Runtime utilisé (ici .NET Isolated Process)
             },
             {
               "name": "AzureWebJobsStorage",
               "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value, ';EndpointSuffix=core.windows.net')]"
+              // Chaîne de connexion au compte de stockage Azure
             },
             {
               "name": "ServiceBusConnectionString",
               "value": "[parameters('serviceBusConnectionString')]"
+              // Chaîne de connexion pour Azure Service Bus
             },
             {
               "name": "WEBSITE_RUN_FROM_PACKAGE",
               "value": "1"
+              // Spécifie que l'application s'exécute depuis un package déployé
             }
           ]
         },
         "httpsOnly": true
+        // Force l'utilisation du HTTPS pour l'application
       }
     },
     {
       "type": "Microsoft.Web/serverfarms",
+      // Type de ressource : plan d'hébergement App Service
       "apiVersion": "2018-11-01",
+      // Version de l'API pour le plan d'hébergement
       "name": "[parameters('hostingPlanName')]",
+      // Nom du plan d'hébergement
       "location": "[parameters('location')]",
+      // Région où le plan d'hébergement sera créé
       "properties": {
         "name": "[parameters('hostingPlanName')]",
+        // Nom du plan d'hébergement
         "workerSize": "0",
+        // Taille des workers (0 = plus petite taille disponible)
         "numberOfWorkers": "1"
+        // Nombre de workers alloués au plan (ici, 1)
       },
       "sku": {
         "Tier": "[parameters('sku')]",
+        // Niveau de tarification (ex. Dynamic pour le consommateur)
         "Name": "[parameters('skuCode')]"
+        // Code SKU (ex. Y1 pour le consommateur)
       }
     }
   ]
