@@ -63,23 +63,24 @@ steps:
         Write-Host "Chaîne de connexion Service Bus : $SERVICEBUS_CONNECTION_STRING"
         Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$SERVICEBUS_CONNECTION_STRING"
 
-  # Étape 5 : Vérification des paramètres configurés
+  # Étape 5 : Vérification de l'existence de la Function App
   - task: AzureCLI@2
-    displayName: 'Vérifier les paramètres d’application configurés'
+    displayName: 'Vérifier si la Function App existe'
     inputs:
       azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
       scriptType: 'ps'
       scriptLocation: 'inlineScript'
       inlineScript: |
-        # Définir la commande Azure CLI pour récupérer les paramètres de la Function App
-        $COMMAND = "az functionapp config appsettings list --resource-group 'Projet-2' --name 'FunctionAppProjet23'"
+        # Vérifier si la Function App existe
+        $functionAppExists = az functionapp show --resource-group 'Projet-2' --name 'FunctionAppProjet23' --query "name" -o tsv
+        
+        if ($functionAppExists) {
+            Write-Host "La Function App existe."
+        } else {
+            Write-Host "La Function App n'existe pas."
+            exit 1
+        }
 
-        # Exécuter la commande et récupérer les résultats
-        $RESULT = Invoke-Expression $COMMAND
-
-        # Afficher les résultats de la commande
-        Write-Host "Paramètres d'application configurés :"
-        Write-Host $RESULT
 
 
   # Étape 6 : Récupérer les dépendances
