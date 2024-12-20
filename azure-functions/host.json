@@ -1,33 +1,55 @@
 {
-  "version": "2.0",
+  "version": "2.0", 
+  // Version du runtime Azure Functions utilisée
+
   "extensions": {
     "serviceBus": {
-      "prefetchCount": 100,
+      // Configuration spécifique à l'extension Service Bus
+      "prefetchCount": 100, 
+      // Nombre de messages préchargés pour améliorer les performances
       "messageHandlerOptions": {
-        "autoComplete": true,
-        "maxConcurrentCalls": 16,
+        "autoComplete": true, 
+        // Les messages sont automatiquement complétés après traitement
+        "maxConcurrentCalls": 16, 
+        // Nombre maximum d'appels simultanés pour traiter les messages
         "maxAutoRenewDuration": "00:05:00"
+        // Durée maximale pour renouveler automatiquement le verrouillage d'un message
       }
     },
     "http": {
-      "routePrefix": "api"
+      // Configuration spécifique à l'extension HTTP
+      "routePrefix": "api" 
+      // Préfixe utilisé pour toutes les routes HTTP (exemple : /api/myfunction)
     },
     "blobs": {
-      "maxConcurrentCalls": 5
+      // Configuration spécifique à l'extension Blobs
+      "maxConcurrentCalls": 5 
+      // Nombre maximum d'appels simultanés pour traiter les blobs
     }
   },
+
   "logging": {
+    // Configuration pour la journalisation
     "logLevel": {
-      "Function.BlobTriggeredFunction": "Information",
-      "Function.ServiceBusQueueFunction": "Information",
-      "default": "Warning"
+      // Niveau de log pour des fonctions spécifiques
+      "Function.BlobTriggeredFunction": "Information", 
+      // Niveau de journalisation pour la fonction BlobTriggeredFunction
+      "Function.ServiceBusQueueFunction": "Information", 
+      // Niveau de journalisation pour la fonction ServiceBusQueueFunction
+      "default": "Warning" 
+      // Niveau de log par défaut pour toutes les autres fonctions
     },
     "applicationInsights": {
+      // Configuration pour Application Insights
       "samplingSettings": {
-        "isEnabled": true,
+        "isEnabled": true, 
+        // Activation de l'échantillonnage pour réduire la charge sur Application Insights
         "excludedTypes": "Request"
+        // Types de données à exclure du suivi (ici, les requêtes)
       }
     }
   },
-  "functionTimeout": "00:10:00"
+
+  "functionTimeout": "00:10:00" 
+  // Durée maximale d'exécution pour chaque fonction (10 minutes)
 }
