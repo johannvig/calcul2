@@ -4,9 +4,8 @@ trigger:
 pool: 'default'
 
 variables:
-  # Variables dynamiques pour les chaînes de connexion
-  ServiceBusConnectionString: ''
   AzureWebJobsStorage: ''
+  ServiceBusConnectionString: ''
 
 steps:
 # Étape 1 : Déployer le Blob Storage
@@ -45,31 +44,22 @@ steps:
     csmFile: 'infra/azuredeploy-servicebus.json'
     csmParametersFile: 'infra/parameters-servicebus.json'
 
-# Étape 4 : Attendre la disponibilité du Service Bus
-- task: PowerShell@2
-  displayName: 'Attente de la disponibilité du Service Bus'
-  inputs:
-    targetType: 'inline'
-    script: |
-      Write-Host "Attente de 30 secondes pour la disponibilité du Service Bus..."
-      Start-Sleep -Seconds 30
-
-# Étape 5 : Récupérer la clé de connexion Service Bus
+# Étape 4 : Récupérer la chaîne de connexion ServiceBusConnectionString
 - task: AzureCLI@2
-  displayName: 'Récupérer la clé de connexion Service Bus'
+  displayName: 'Récupérer la chaîne de connexion ServiceBusConnectionString'
   inputs:
     azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     scriptType: 'ps'
     scriptLocation: 'inlineScript'
     inlineScript: |
-      $CONNECTION_STRING = az servicebus namespace authorization-rule keys list `
+      $SERVICEBUS_CONNECTION_STRING = az servicebus namespace authorization-rule keys list `
         --resource-group 'Projet-2' `
         --namespace-name 'AzureBus-TMEB' `
-        --name 'RootManageSharedAccessKey' `
+        --name RootManageSharedAccessKey `
         --query 'primaryConnectionString' -o tsv
-      Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$CONNECTION_STRING"
+      Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$SERVICEBUS_CONNECTION_STRING"
 
-# Étape 6 : Déployer la Function App
+# Étape 5 : Déployer la Function App
 - task: AzureResourceManagerTemplateDeployment@3
   displayName: 'Déployer la Function App'
   inputs:
@@ -82,9 +72,9 @@ steps:
     overrideParameters: >
       -serviceBusConnectionString "$(ServiceBusConnectionString)"
 
-# Étape 7 : Configurer les variables d'application pour la Function App
+# Étape 6 : Configurer les variables d’application pour Function App
 - task: AzureCLI@2
-  displayName: 'Configurer les variables d’application'
+  displayName: 'Configurer les variables d’application pour Function App'
   inputs:
     azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     scriptType: 'ps'
@@ -93,8 +83,20 @@ steps:
       az functionapp config appsettings set `
         --resource-group 'Projet-2' `
         --name 'FunctionAppProjet23' `
-        --settings AzureWebJobsStorage=$(AzureWebJobsStorage) `
-                   ServiceBusConnectionString=$(ServiceBusConnectionString)
+        --settings AzureWebJobsStorage="$(AzureWebJobsStorage)" `
+                   ServiceBusConnectionString="$(ServiceBusConnectionString)"
+
+# Étape 7 : Vérifier les paramètres configurés
+- task: AzureCLI@2
+  displayName: 'Vérifier les paramètres d’application configurés'
+  inputs:
+    azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
+    scriptType: 'ps'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      az functionapp config appsettings list `
+        --resource-group 'Projet-2' `
+        --name 'FunctionAppProjet23'
 
 # Étape 8 : Installer le SDK .NET 8.x
 - task: UseDotNet@2
@@ -129,3 +131,9 @@ steps:
     appType: 'functionApp'
     appName: 'FunctionAppProjet23'
     package: '$(System.DefaultWorkingDirectory)/azure-functions/publishs'
+
+# Étape 13 : Vérification finale
+- script: |
+    echo "Clé Service Bus utilisée : $(ServiceBusConnectionString)"
+    echo "Déploiement terminé avec succès."
+  displayName: 'Vérification finale'
