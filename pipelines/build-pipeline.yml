@@ -146,7 +146,7 @@ steps:
   inputs:
     azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
     appType: 'functionApp'
-    appName: 'FunctionAppProjet2'
+    appName: 'FunctionAppProjet23'
     package: '$(System.DefaultWorkingDirectory)/azure-functions.zip'
 
 # Etape 14 (Deploy) : VErification finale
