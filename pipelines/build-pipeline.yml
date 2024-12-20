@@ -63,25 +63,26 @@ steps:
         Write-Host "Chaîne de connexion Service Bus : $SERVICEBUS_CONNECTION_STRING"
         Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$SERVICEBUS_CONNECTION_STRING"
 
-  # Étape 5 : Vérification de l'existence de la Function App
+  # Étape 5 : Vérification ou création de la Function App
   - task: AzureCLI@2
-    displayName: 'Vérifier si la Function App existe'
+    displayName: 'Vérifier ou créer la Function App'
     inputs:
       azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
       scriptType: 'ps'
       scriptLocation: 'inlineScript'
       inlineScript: |
-        # Vérifier si la Function App existe
         $functionAppExists = az functionapp show --resource-group 'Projet-2' --name 'FunctionAppProjet23' --query "name" -o tsv
-        
-        if ($functionAppExists) {
-            Write-Host "La Function App existe."
+        if (-not $functionAppExists) {
+            az functionapp create `
+              --resource-group 'Projet-2' `
+              --name 'FunctionAppProjet23' `
+              --storage-account 'storageprojet23' `
+              --consumption-plan-location 'canadacentral' `
+              --runtime 'dotnet'
+            Write-Host "Function App créée avec succès."
         } else {
-            Write-Host "La Function App n'existe pas."
-            exit 1
+            Write-Host "La Function App existe déjà."
         }
-
-
 
   # Étape 6 : Récupérer les dépendances
   - script: |
