@@ -63,7 +63,7 @@ steps:
         Write-Host "Chaîne de connexion Service Bus : $SERVICEBUS_CONNECTION_STRING"
         Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$SERVICEBUS_CONNECTION_STRING"
 
-  # Étape 5 : Vérification ou création de la Function App
+    # Étape 5 : Vérification ou création de la Function App
   - task: AzureCLI@2
     displayName: 'Vérifier ou créer la Function App'
     inputs:
@@ -82,6 +82,8 @@ steps:
             Write-Host "Function App créée avec succès."
         } else {
             Write-Host "La Function App existe déjà."
+        }
+
 
   # Étape 6 : Récupérer les dépendances
   - script: |
