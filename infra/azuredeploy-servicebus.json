@@ -1,37 +1,65 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  // URL du schéma JSON pour valider la structure de ce template ARM
+
   "contentVersion": "1.0.0.0",
+  // Version du contenu pour le contrôle des versions de ce template
+
   "parameters": {
+    // Paramètres définis pour personnaliser le déploiement
     "namespaces_AzureBus_TMEB_name": {
       "defaultValue": "AzureBus-TMEB",
+      // Nom par défaut du namespace Azure Service Bus
       "type": "String"
+      // Type de données : chaîne de caractères
     }
   },
-  "variables": {},
+
+  "variables": {
+    // Section vide ici, mais peut être utilisée pour stocker des valeurs calculées
+  },
+
   "resources": [
+    // Liste des ressources à déployer ou configurer
+
     {
       "type": "Microsoft.ServiceBus/namespaces",
+      // Type de ressource : namespace Azure Service Bus
       "apiVersion": "2023-01-01-preview",
+      // Version de l'API utilisée pour interagir avec Azure Service Bus
       "name": "[parameters('namespaces_AzureBus_TMEB_name')]",
+      // Nom du namespace, fourni par le paramètre
       "location": "canadacentral",
+      // Région Azure où le namespace sera déployé
       "sku": {
         "name": "Basic",
+        // Niveau de tarification (Basic)
         "tier": "Basic"
+        // Indique que le niveau est également "Basic"
       },
       "properties": {
         "minimumTlsVersion": "1.2",
+        // Force l'utilisation de TLS 1.2 pour les connexions
         "publicNetworkAccess": "Enabled",
+        // Autorise l'accès via le réseau public
         "disableLocalAuth": false,
+        // Active l'authentification locale
         "zoneRedundant": false
+        // Désactive la redondance de zone
       }
     },
     {
       "type": "Microsoft.ServiceBus/namespaces/authorizationrules",
+      // Règle d'autorisation pour le namespace
       "apiVersion": "2023-01-01-preview",
+      // Version de l'API utilisée
       "name": "[concat(parameters('namespaces_AzureBus_TMEB_name'), '/RootManageSharedAccessKey')]",
+      // Nom de la règle : RootManageSharedAccessKey
       "location": "canadacentral",
+      // Région où la règle est créée
       "dependsOn": [
         "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaces_AzureBus_TMEB_name'))]"
+        // Cette ressource dépend du namespace
       ],
       "properties": {
         "rights": [
@@ -39,49 +67,76 @@
           "Manage",
           "Send"
         ]
+        // Droits accordés : écouter, gérer, et envoyer des messages
       }
     },
     {
       "type": "Microsoft.ServiceBus/namespaces/networkrulesets",
+      // Configuration des règles réseau pour le namespace
       "apiVersion": "2023-01-01-preview",
+      // Version de l'API utilisée
       "name": "[concat(parameters('namespaces_AzureBus_TMEB_name'), '/default')]",
+      // Nom des règles réseau par défaut
       "location": "canadacentral",
+      // Région où les règles sont appliquées
       "dependsOn": [
         "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaces_AzureBus_TMEB_name'))]"
+        // Cette ressource dépend du namespace
       ],
       "properties": {
         "publicNetworkAccess": "Enabled",
+        // Autorise l'accès via le réseau public
         "defaultAction": "Allow",
+        // Autorise par défaut l'accès au namespace
         "trustedServiceAccessEnabled": false
+        // Désactive l'accès par les services de confiance
       }
     },
     {
       "type": "Microsoft.ServiceBus/namespaces/queues",
+      // Définition d'une queue dans le namespace
       "apiVersion": "2023-01-01-preview",
+      // Version de l'API utilisée
       "name": "[concat(parameters('namespaces_AzureBus_TMEB_name'), '/messagequeue')]",
+      // Nom de la queue : messagequeue
       "location": "canadacentral",
+      // Région où la queue est créée
       "dependsOn": [
         "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaces_AzureBus_TMEB_name'))]"
+        // Cette ressource dépend du namespace
       ],
       "properties": {
         "lockDuration": "PT1M",
+        // Durée du verrouillage des messages (1 minute)
         "maxSizeInMegabytes": 1024,
+        // Taille maximale de la queue (1 Go)
         "requiresDuplicateDetection": false,
+        // Désactive la détection des doublons
         "requiresSession": false,
+        // Désactive l'utilisation des sessions
         "defaultMessageTimeToLive": "P14D",
+        // Durée de vie par défaut des messages (14 jours)
         "enableBatchedOperations": true,
+        // Active les opérations en batch pour optimiser les performances
         "maxDeliveryCount": 10,
+        // Nombre maximum de tentatives de livraison avant rejet
         "status": "Active"
+        // Statut de la queue : Active
       }
     },
     {
       "type": "Microsoft.ServiceBus/namespaces/queues/authorizationrules",
+      // Règle d'autorisation pour la queue
       "apiVersion": "2023-01-01-preview",
+      // Version de l'API utilisée
       "name": "[concat(parameters('namespaces_AzureBus_TMEB_name'), '/messagequeue/access')]",
+      // Nom de la règle : access
       "location": "canadacentral",
+      // Région où la règle est créée
       "dependsOn": [
         "[resourceId('Microsoft.ServiceBus/namespaces/queues', parameters('namespaces_AzureBus_TMEB_name'), 'messagequeue')]",
         "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaces_AzureBus_TMEB_name'))]"
+        // Dépend du namespace et de la queue
       ],
       "properties": {
         "rights": [
@@ -89,13 +144,18 @@
           "Listen",
           "Send"
         ]
+        // Droits accordés : gérer, écouter, et envoyer des messages
       }
     }
   ],
+
   "outputs": {
+    // Sorties renvoyées par le template
     "serviceBusConnectionString": {
       "type": "string",
+      // Type de la sortie : chaîne de caractères
       "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('namespaces_AzureBus_TMEB_name'), 'RootManageSharedAccessKey'), '2017-04-01').primaryConnectionString]"
+      // Retourne la chaîne de connexion principale pour le namespace
     }
   }
 }
