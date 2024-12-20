@@ -1,79 +1,116 @@
 {
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  // URL du schéma JSON pour valider la structure de ce template ARM
+
   "contentVersion": "1.0.0.0",
+  // Version du contenu pour le contrôle des versions de ce template
+
   "parameters": {
+    // Paramètres définis pour personnaliser le déploiement
+
     "location": {
       "type": "string",
       "defaultValue": "canadacentral"
+      // Région Azure où les ressources seront déployées (par défaut, Canada Central)
     },
     "storageAccountName": {
       "type": "string"
+      // Nom du compte de stockage Azure (doit être unique globalement)
     },
     "accountType": {
       "type": "string",
       "defaultValue": "Standard_LRS"
+      // Type de stockage (par défaut, stockage localement redondant standard)
     },
     "kind": {
       "type": "string",
       "defaultValue": "StorageV2"
+      // Type de compte de stockage (par défaut, StorageV2, le plus récent)
     },
     "minimumTlsVersion": {
       "type": "string",
       "defaultValue": "TLS1_2"
+      // Version minimale de TLS requise pour sécuriser les connexions
     },
     "supportsHttpsTrafficOnly": {
       "type": "bool",
       "defaultValue": true
+      // Forcer les connexions HTTPS uniquement (par défaut activé)
     },
     "allowBlobPublicAccess": {
       "type": "bool",
       "defaultValue": false
+      // Empêche l'accès public aux conteneurs Blob (par défaut désactivé)
     },
     "container1Name": {
       "type": "string",
       "defaultValue": "images"
+      // Nom du premier conteneur Blob (par défaut, "images")
     },
     "container2Name": {
       "type": "string",
       "defaultValue": "processed-images"
+      // Nom du second conteneur Blob (par défaut, "processed-images")
     }
   },
+
   "resources": [
+    // Liste des ressources à déployer ou configurer
+
     {
       "type": "Microsoft.Storage/storageAccounts",
+      // Type de ressource : compte de stockage Azure
       "apiVersion": "2023-05-01",
+      // Version de l'API utilisée pour interagir avec les comptes de stockage
       "name": "[parameters('storageAccountName')]",
+      // Nom du compte de stockage fourni par le paramètre
       "location": "[parameters('location')]",
+      // Région où le compte de stockage sera déployé
       "sku": {
         "name": "[parameters('accountType')]"
+        // Type de stockage (ex. Standard_LRS pour localement redondant)
       },
       "kind": "[parameters('kind')]",
+      // Type de compte de stockage (StorageV2 pour les fonctionnalités modernes)
       "properties": {
         "minimumTlsVersion": "[parameters('minimumTlsVersion')]",
+        // Version minimale de TLS requise
         "supportsHttpsTrafficOnly": "[parameters('supportsHttpsTrafficOnly')]",
+        // Forcer les connexions HTTPS uniquement
         "allowBlobPublicAccess": "[parameters('allowBlobPublicAccess')]"
+        // Bloque l'accès public aux conteneurs Blob
       }
     },
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      // Type de ressource : conteneur Blob dans le compte de stockage
       "apiVersion": "2023-05-01",
+      // Version de l'API utilisée
       "name": "[concat(parameters('storageAccountName'), '/default/', parameters('container1Name'))]",
+      // Nom du conteneur (basé sur le nom du compte et du conteneur)
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+        // Cette ressource dépend de l'existence du compte de stockage
       ],
       "properties": {
         "publicAccess": "None"
+        // Interdit l'accès public au conteneur
       }
     },
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      // Type de ressource : second conteneur Blob
       "apiVersion": "2023-05-01",
+      // Version de l'API utilisée
       "name": "[concat(parameters('storageAccountName'), '/default/', parameters('container2Name'))]",
+      // Nom du second conteneur
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+        // Dépend également du compte de stockage
       ],
       "properties": {
         "publicAccess": "None"
+        // Interdit l'accès public au conteneur
       }
     }
   ]
