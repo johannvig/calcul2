@@ -16,7 +16,7 @@ namespace Company.Functions
         private const string SourceContainerName = "images"; // Conteneur source contenant les blobs d'origine
         private const string DestinationContainerName = "processed-images"; // Conteneur de destination pour les blobs traités
 
-        [Function("ServiceBusQueueFunction")] 
+        [Function("ServiceBusQueueFunction")]
         // Attribut indiquant qu'il s'agit d'une fonction Azure nommée "ServiceBusQueueFunction"
         public async Task Run(
             // Déclencheur Service Bus qui reçoit le nom d'un blob depuis une queue nommée "messagequeue"
@@ -29,6 +29,14 @@ namespace Company.Functions
 
             // Récupération de la chaîne de connexion pour Azure Blob Storage
             var blobConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+            if (string.IsNullOrEmpty(blobConnectionString))
+            {
+                logger.LogError("La chaîne de connexion AzureWebJobsStorage est vide ou non configurée.");
+                return;
+            }
+            logger.LogInformation($"AzureWebJobsStorage : {blobConnectionString}");
+
+            // Création du client Blob Service
             var blobServiceClient = new BlobServiceClient(blobConnectionString);
 
             // Accéder aux conteneurs source et destination
@@ -39,31 +47,34 @@ namespace Company.Functions
             {
                 // Obtenir le client Blob pour le fichier source
                 var sourceBlob = sourceContainer.GetBlobClient(blobName);
-                if (!await sourceBlob.ExistsAsync()) 
+                if (!await sourceBlob.ExistsAsync())
                 {
                     // Vérifier si le blob existe, sinon enregistrer une erreur
                     logger.LogError($"Le blob {blobName} n'existe pas.");
                     return;
                 }
 
+                logger.LogInformation($"Blob trouvé : {blobName}, téléchargement en cours...");
+
                 // Télécharger le contenu du blob source dans un flux en mémoire
                 await using var originalBlobStream = new MemoryStream();
                 await sourceBlob.DownloadToAsync(originalBlobStream);
+                logger.LogInformation($"Blob {blobName} téléchargé avec succès.");
 
                 // Traiter l'image et ajouter un watermark
                 await using var processedBlobStream = new MemoryStream();
                 ProcessImage(originalBlobStream, processedBlobStream, "Watermark Text");
                 processedBlobStream.Position = 0; // Réinitialiser la position du flux avant de le réutiliser
+                logger.LogInformation($"Traitement et watermark du blob {blobName} terminés.");
 
                 // Charger l'image traitée dans le conteneur de destination
                 var destinationBlob = destinationContainer.GetBlobClient(blobName);
                 await destinationBlob.UploadAsync(processedBlobStream, overwrite: true);
-
                 logger.LogInformation($"Fichier {blobName} traité et sauvegardé dans {DestinationContainerName}.");
 
                 // Supprimer le fichier source après traitement
                 await sourceBlob.DeleteAsync();
-                logger.LogInformation($"Fichier original {blobName} supprimé.");
+                logger.LogInformation($"Fichier original {blobName} supprimé du conteneur source.");
             }
             catch (Exception ex)
             {
