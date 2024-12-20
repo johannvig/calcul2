@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "canadacentral"
+    },
+    "storageAccountName": {
+      "value": "storageprojet2"
+    },
+    "accountType": {
+      "value": "Standard_RAGRS"
+    },
+    "kind": {
+      "value": "StorageV2"
+    },
+    "minimumTlsVersion": {
+      "value": "TLS1_2"
+    },
+    "supportsHttpsTrafficOnly": {
+      "value": true
+    },
+    "allowBlobPublicAccess": {
+      "value": false
+    },
+    "container1Name": {
+      "value": "images"
+    },
+    "container2Name": {
+      "value": "processed-images"
+    }
+  }
+}

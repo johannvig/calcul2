@@ -1,0 +1,101 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namespaces_AzureBus_TMEB_name": {
+      "defaultValue": "AzureBus-TMEB",
+      "type": "String"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.ServiceBus/namespaces",
+      "apiVersion": "2023-01-01-preview",
+      "name": "[parameters('namespaces_AzureBus_TMEB_name')]",
+      "location": "canadacentral",
+      "sku": {
+        "name": "Basic",
+        "tier": "Basic"
+      },
+      "properties": {
+        "minimumTlsVersion": "1.2",
+        "publicNetworkAccess": "Enabled",
+        "disableLocalAuth": false,
+        "zoneRedundant": false
+      }
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces/authorizationrules",
+      "apiVersion": "2023-01-01-preview",
+      "name": "[concat(parameters('namespaces_AzureBus_TMEB_name'), '/RootManageSharedAccessKey')]",
+      "location": "canadacentral",
+      "dependsOn": [
+        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaces_AzureBus_TMEB_name'))]"
+      ],
+      "properties": {
+        "rights": [
+          "Listen",
+          "Manage",
+          "Send"
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces/networkrulesets",
+      "apiVersion": "2023-01-01-preview",
+      "name": "[concat(parameters('namespaces_AzureBus_TMEB_name'), '/default')]",
+      "location": "canadacentral",
+      "dependsOn": [
+        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaces_AzureBus_TMEB_name'))]"
+      ],
+      "properties": {
+        "publicNetworkAccess": "Enabled",
+        "defaultAction": "Allow",
+        "trustedServiceAccessEnabled": false
+      }
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces/queues",
+      "apiVersion": "2023-01-01-preview",
+      "name": "[concat(parameters('namespaces_AzureBus_TMEB_name'), '/messagequeue')]",
+      "location": "canadacentral",
+      "dependsOn": [
+        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaces_AzureBus_TMEB_name'))]"
+      ],
+      "properties": {
+        "lockDuration": "PT1M",
+        "maxSizeInMegabytes": 1024,
+        "requiresDuplicateDetection": false,
+        "requiresSession": false,
+        "defaultMessageTimeToLive": "P14D",
+        "enableBatchedOperations": true,
+        "maxDeliveryCount": 10,
+        "status": "Active"
+      }
+    },
+    {
+      "type": "Microsoft.ServiceBus/namespaces/queues/authorizationrules",
+      "apiVersion": "2023-01-01-preview",
+      "name": "[concat(parameters('namespaces_AzureBus_TMEB_name'), '/messagequeue/access')]",
+      "location": "canadacentral",
+      "dependsOn": [
+        "[resourceId('Microsoft.ServiceBus/namespaces/queues', parameters('namespaces_AzureBus_TMEB_name'), 'messagequeue')]",
+        "[resourceId('Microsoft.ServiceBus/namespaces', parameters('namespaces_AzureBus_TMEB_name'))]"
+      ],
+      "properties": {
+        "rights": [
+          "Manage",
+          "Listen",
+          "Send"
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "serviceBusConnectionString": {
+      "type": "string",
+      "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('namespaces_AzureBus_TMEB_name'), 'RootManageSharedAccessKey'), '2017-04-01').primaryConnectionString]"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "value": "6f829ed3-9404-40fa-95ce-759de2a2f00e"
+    },
+    "name": {
+      "value": "FunctionAppProjet2"
+    },
+    "location": {
+      "value": "canadacentral"
+    },
+    "storageAccountName": {
+      "value": "storageprojet2"
+    },
+    "containerName": {
+      "value": "images"
+    },
+    "serviceBusConnectionString": {
+      "value": "[reference(resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', 'AzureBus-TMEB', 'RootManageSharedAccessKey'), '2017-04-01').primaryConnectionString]"
+    },
+    "sku": {
+      "value": "Dynamic"
+    },
+    "skuCode": {
+      "value": "Y1"
+    },
+    "hostingPlanName": {
+      "value": "ASP-Projet2-8acc"
+    },
+    "serverFarmResourceGroup": {
+      "value": "Projet-2"
+    }
+  }
+}
