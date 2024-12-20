@@ -1,36 +1,52 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  // URL du schéma JSON pour valider la structure de ce fichier de paramètres ARM
+
   "contentVersion": "1.0.0.0",
+  // Version du contenu pour le contrôle des versions de ce fichier
+
   "parameters": {
+    // Paramètres et leurs valeurs spécifiques pour le déploiement
+
     "subscriptionId": {
       "value": "4752c137-48fe-4a21-ac6e-435c1d51dbe9"
+      // ID de la souscription Azure où les ressources seront déployées
     },
     "name": {
       "value": "FunctionAppProjet23"
+      // Nom de l'application Azure Functions
     },
     "location": {
       "value": "canadacentral"
+      // Région Azure où les ressources seront déployées (Canada Central)
     },
     "storageAccountName": {
       "value": "storageprojet23"
+      // Nom du compte de stockage Azure
     },
     "containerName": {
       "value": "images"
+      // Nom du conteneur Blob à créer dans le compte de stockage
     },
     "serviceBusConnectionString": {
       "value": "[reference(resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', 'AzureBus-TMEB', 'RootManageSharedAccessKey'), '2017-04-01').primaryConnectionString]"
+      // Chaîne de connexion primaire pour Azure Service Bus, récupérée dynamiquement via une référence
     },
     "sku": {
       "value": "Dynamic"
+      // Type de tarification pour le plan d'hébergement (Dynamic pour le modèle consommateur)
     },
     "skuCode": {
       "value": "Y1"
+      // Code SKU associé à la tarification Dynamic (Y1 pour le consommateur)
     },
     "hostingPlanName": {
       "value": "ASP-Projet2-8acc"
+      // Nom du plan d'hébergement (App Service Plan) pour Azure Functions
     },
     "serverFarmResourceGroup": {
       "value": "Projet-2"
+      // Nom du groupe de ressources où le plan d'hébergement est défini
     }
   }
 }
