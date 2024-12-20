@@ -1,33 +1,48 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  // URL du schéma JSON pour valider la structure de ce fichier de paramètres ARM
+
   "contentVersion": "1.0.0.0",
+  // Version du contenu pour le contrôle des versions de ce fichier
+
   "parameters": {
+    // Paramètres et leurs valeurs spécifiques pour le déploiement
+
     "location": {
       "value": "canadacentral"
+      // Région Azure où les ressources seront déployées (Canada Central)
     },
     "storageAccountName": {
       "value": "storageprojet23"
+      // Nom du compte de stockage Azure (doit être unique globalement)
     },
     "accountType": {
       "value": "Standard_RAGRS"
+      // Type de stockage : Redondance géographique avec accès en lecture (RA-GRS)
     },
     "kind": {
       "value": "StorageV2"
+      // Type de compte de stockage (StorageV2 pour les fonctionnalités modernes)
     },
     "minimumTlsVersion": {
       "value": "TLS1_2"
+      // Version minimale de TLS requise pour sécuriser les connexions (TLS 1.2)
     },
     "supportsHttpsTrafficOnly": {
       "value": true
+      // Forcer les connexions HTTPS uniquement (true = activé)
     },
     "allowBlobPublicAccess": {
       "value": false
+      // Empêche l'accès public aux conteneurs Blob (false = désactivé)
     },
     "container1Name": {
       "value": "images"
+      // Nom du premier conteneur Blob (ici, "images")
     },
     "container2Name": {
       "value": "processed-images"
+      // Nom du second conteneur Blob (ici, "processed-images")
     }
   }
 }
