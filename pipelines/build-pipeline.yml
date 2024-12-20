@@ -1,58 +1,32 @@
- 
 trigger:
- 
-- main
- 
- 
+  - main
+
 pool: 'default'
- 
- 
+
 variables:
- 
   AzureWebJobsStorage: ''
- 
   ServiceBusConnectionString: ''
- 
- 
+
 steps:
- 
   # Étape 1 : Déployer le Blob Storage
- 
   - task: AzureResourceManagerTemplateDeployment@3
- 
     displayName: 'Déployer le Blob Storage'
- 
     inputs:
- 
       azureResourceManagerConnection: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
- 
       resourceGroupName: 'Projet-2'
- 
       location: 'canadacentral'
- 
       templateLocation: 'Linked artifact'
- 
       csmFile: 'infra/azuredeploy-storage.json'
- 
       csmParametersFile: 'infra/parameters-storage.json'
- 
- 
+
   # Étape 2 : Récupérer la chaîne de connexion Blob Storage
- 
   - task: AzureCLI@2
- 
     displayName: 'Récupérer la chaîne de connexion AzureWebJobsStorage'
- 
     inputs:
- 
       azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
- 
       scriptType: 'ps'
- 
       scriptLocation: 'inlineScript'
- 
       inlineScript: |
- 
         $STORAGE_CONNECTION_STRING = az storage account show-connection-string `
           --resource-group 'Projet-2' `
           --name 'storageprojet23' `
@@ -61,29 +35,18 @@ steps:
         Write-Host "Chaîne de connexion Blob Storage : $STORAGE_CONNECTION_STRING"
         Write-Host "##vso[task.setvariable variable=AzureWebJobsStorage]$STORAGE_CONNECTION_STRING"
 
-        
   # Étape 3 : Déployer le Service Bus
- 
   - task: AzureResourceManagerTemplateDeployment@3
- 
     displayName: 'Déployer le Service Bus'
- 
     inputs:
- 
       azureResourceManagerConnection: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
- 
       resourceGroupName: 'Projet-2'
- 
       location: 'canadacentral'
- 
       templateLocation: 'Linked artifact'
- 
       csmFile: 'infra/azuredeploy-servicebus.json'
- 
       csmParametersFile: 'infra/parameters-servicebus.json'
- 
- 
-  # Étape 4 : Récupérer la chaîne de connexion Service Bus
+
+  # Étape 4 : Récupérer la chaîne de connexion ServiceBusConnectionString
   - task: AzureCLI@2
     displayName: 'Récupérer la chaîne de connexion ServiceBusConnectionString'
     inputs:
@@ -91,32 +54,23 @@ steps:
       scriptType: 'ps'
       scriptLocation: 'inlineScript'
       inlineScript: |
-        # Créer la commande Azure CLI complète (sans backticks)
-        $COMMAND = "az servicebus namespace authorization-rule keys list --resource-group 'Projet-2' --namespace-name 'AzureBus-TMEB' --name 'RootManageSharedAccessKey' --query 'primaryConnectionString' -o tsv"
+        $SERVICEBUS_CONNECTION_STRING = az servicebus namespace authorization-rule keys list `
+          --resource-group 'Projet-2' `
+          --namespace-name 'AzureBus-TMEB' `
+          --name 'RootManageSharedAccessKey' `
+          --query 'primaryConnectionString' -o tsv
 
-        # Exécuter la commande et récupérer la chaîne de connexion
-        $SERVICEBUS_CONNECTION_STRING = & $COMMAND
-
-        # Afficher la chaîne de connexion et définir la variable
         Write-Host "Chaîne de connexion Service Bus : $SERVICEBUS_CONNECTION_STRING"
         Write-Host "##vso[task.setvariable variable=ServiceBusConnectionString]$SERVICEBUS_CONNECTION_STRING"
 
   # Étape 5 : Vérification des paramètres configurés
- 
   - task: AzureCLI@2
- 
     displayName: 'Vérifier les paramètres d’application configurés'
- 
     inputs:
- 
       azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
- 
       scriptType: 'ps'
- 
       scriptLocation: 'inlineScript'
- 
       inlineScript: |
- 
         # Définir la commande Azure CLI pour récupérer les paramètres de la Function App
         $COMMAND = "az functionapp config appsettings list `
           --resource-group 'Projet-2' `
@@ -129,85 +83,46 @@ steps:
         Write-Host "Paramètres d'application configurés :"
         Write-Host $RESULT
 
- 
   # Étape 6 : Récupérer les dépendances
- 
   - script: |
- 
       dotnet restore
- 
       dotnet build --configuration Release
- 
     workingDirectory: './azure-functions'
- 
     displayName: 'Restaurer les dépendances'
- 
- 
+
   - task: DotNetCoreCLI@2
- 
     inputs:
- 
       command: publish
- 
       arguments: '--configuration Release --output publish_output'
- 
       projects: '*.csproj'
- 
       publishWebProjects: false
- 
       modifyOutputPath: false
- 
       zipAfterPublish: false
- 
- 
+
   - task: ArchiveFiles@2
- 
     displayName: "Archive files"
- 
     inputs:
- 
       rootFolderOrFile: "$(System.DefaultWorkingDirectory)"
- 
       includeRootFolder: false
- 
       archiveFile: "$(System.DefaultWorkingDirectory)/build$(Build.BuildId).zip"
- 
- 
+
   - task: PublishBuildArtifacts@1
- 
     inputs:
- 
       PathtoPublish: '$(System.DefaultWorkingDirectory)/build$(Build.BuildId).zip'
- 
       artifactName: 'drop'
- 
- 
+
   # Étape 7 : Déployer la Function App
- 
   - task: AzureFunctionApp@1
- 
     displayName: 'Déployer les fonctions dans Azure'
- 
     inputs:
- 
       azureSubscription: 'Azure subscription 1(2)(4752c137-48fe-4a21-ac6e-435c1d51dbe9)'
- 
       appType: 'functionApp'
- 
       appName: 'FunctionAppProjet23'
- 
       package: $(System.DefaultWorkingDirectory)/*.zip
- 
- 
+
   # Étape 8 : Vérification finale
- 
   - script: |
- 
       echo "Chaîne Service Bus utilisée : $(ServiceBusConnectionString)"
- 
       echo "Chaîne Blob Storage utilisée : $(AzureWebJobsStorage)"
- 
       echo "Déploiement terminé avec succès."
- 
     displayName: 'Vérification finale'
- 
