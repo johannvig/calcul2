@@ -54,18 +54,14 @@ steps:
       inlineScript: |
  
         $STORAGE_CONNECTION_STRING = az storage account show-connection-string `
- 
-          --resource-group Projet-2 `
- 
-          --name storageprojet23 `
- 
+          --resource-group 'Projet-2' `
+          --name 'storageprojet23' `
           --query 'connectionString' -o tsv
- 
+
         Write-Host "Chaîne de connexion Blob Storage : $STORAGE_CONNECTION_STRING"
- 
         Write-Host "##vso[task.setvariable variable=AzureWebJobsStorage]$STORAGE_CONNECTION_STRING"
- 
- 
+
+        
   # Étape 3 : Déployer le Service Bus
  
   - task: AzureResourceManagerTemplateDeployment@3
